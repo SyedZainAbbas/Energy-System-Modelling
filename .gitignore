@@ -1,0 +1,21 @@
+# Python-generated files
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+dist/
+build/
+.python-version
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Virtual environments
+.venv
+
+# uv specific
+.uv/
