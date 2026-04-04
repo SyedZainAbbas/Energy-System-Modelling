@@ -76,3 +76,23 @@ def simulate_multizone_with_transmission(transmission_capacity_dict):
     
     n.optimize()
     return n
+
+def simulate_multizone_with_transmission_and_generation(transmission_capacity_dict, generation_capacity_dict):
+    """Simulate multizone market with custom transmission and generation capacities."""
+    n = pypsa.Network()
+    add_components(n, ["South Africa", "Mozambique", "Eswatini"])
+    
+    # Update transmission capacities
+    for link_name, capacity in transmission_capacity_dict.items():
+        if link_name in n.links.index:
+            n.links.loc[link_name, "p_nom"] = capacity
+    
+    # Update generation capacities
+    for country, tech_dict in generation_capacity_dict.items():
+        for tech, capacity in tech_dict.items():
+            gen_name = f"{country}-{tech}"
+            if gen_name in n.generators.index:
+                n.generators.loc[gen_name, "p_nom"] = capacity
+    
+    n.optimize()
+    return n    

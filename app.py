@@ -6,6 +6,7 @@ from electricity_markets import (
     simulate_single_zone,
     simulate_multizone,
     simulate_multizone_with_transmission,
+    simulate_multizone_with_transmission_and_generation,
     TRANSMISSION_CAPACITY,
     GENERATION_CAPACITY,
     DEMAND,
@@ -43,7 +44,7 @@ This approach simplifies market operations but can mask underlying network const
 - **Congestion Effects**: When transmission capacity is limited, zones may need to rely on expensive local generation,
   leading to price divergence.
 
-This simulation shows how **transmission capacity affects prices and dispatch** across three Southern African countries.
+This simulation shows how **transmission and generation capacity affects prices and dispatch** across three Southern African countries.
 """)
 
 # ============================================================================
@@ -279,7 +280,6 @@ with st.spinner("Recalculating market with new transmission capacities..."):
         "Mozambique-Eswatini link": moz_esw,
     }
     n_sensitivity = simulate_multizone_with_transmission(transmission_dict)
-
 # Comparison table
 st.markdown("### Transmission Capacity Comparison")
 comparison_data = []
@@ -357,8 +357,168 @@ st.info(
     f"**Note:** This does not account for the capital cost of building new transmission infrastructure, which would need to be considered in a full cost-benefit analysis."
 )
 
+
 # ============================================================================
-# SECTION 5: KEY INSIGHTS & POLICY IMPLICATIONS
+# SECTION 5: TRANSMISSION AND GENERATION CAPACITY IMPACT
+# ============================================================================
+st.markdown("---")
+st.markdown("## Part 3: Transmission & Generation Capacity Impact")
+
+st.markdown("""
+We've seen how transmission capacity drives price convergence. Now explore how increasing 
+hydro generation in Mozambique and Eswatini further reduces prices across the system.
+
+Adjust the sliders to see combined effects of transmission expansion and generation growth.
+""")
+col1, col2, col3 = st.columns(3)
+
+with col1:
+    sa_moz_gen = st.slider(
+        "SA-Mozambique (MW)",
+        min_value=0,
+        max_value=5000,
+        value=3500,
+        step=50,
+        key="sa_moz_slider_gen",
+    )
+
+with col2:
+    sa_esw_gen = st.slider(
+        "SA-Eswatini (MW)",
+        min_value=0,
+        max_value=2000,
+        value=1000,
+        step=50,
+        key="sa_esw_slider_gen",
+    )
+
+with col3:
+    moz_esw_gen = st.slider(
+        "Mozambique-Eswatini (MW)",
+        min_value=0,
+        max_value=2000,
+        value=1350,
+        step=50,
+        key="moz_esw_slider_gen",
+    )
+
+col1, col2 = st.columns(2)
+
+with col1:
+    moz_hydro = st.slider(
+        "Mozambique Hydro (MW)",
+        min_value=1200,
+        max_value=5000,
+        value=4000,
+        step=50,
+        key="moz_hydro_slider",
+    )
+
+with col2:
+    esw_hydro = st.slider(
+        "Eswatini Hydro (MW)",
+        min_value=600,
+        max_value=1500,
+        value=900,
+        step=50,
+        key="esw_hydro_slider",
+    )
+
+# Run optimization with new transmission capacities
+with st.spinner("Recalculating market with new generation and transmission capacities..."):
+    transmission_dict_gen = {
+        "South Africa-Mozambique link": sa_moz_gen,
+        "South Africa-Eswatini link": sa_esw_gen,
+        "Mozambique-Eswatini link": moz_esw_gen,
+    }
+    generation_dict_gen = {
+        "Mozambique": {"Hydro": moz_hydro},
+        "Eswatini": {"Hydro": esw_hydro},
+    }
+    n_sensitivity_gen = simulate_multizone_with_transmission_and_generation(transmission_dict_gen, generation_dict_gen)
+
+# Comparison table
+st.markdown("### Transmission and Generation Capacity Comparison")
+flow_data_gen = []
+
+for link in ["South Africa-Mozambique link", "South Africa-Eswatini link", "Mozambique-Eswatini link"]:
+    capacity_gen = n_sensitivity_gen.links.loc[link, "p_nom"]
+    flow_gen = n_sensitivity_gen.links_t.p0[link].iloc[0]
+    
+    flow_data_gen.append({
+        "Corridor": link.replace(" link", ""),
+        "New Capacity (MW)": capacity_gen,
+        "New Flow (MW)": flow_gen,
+        "Utilization (%)": round(abs(flow_gen) / capacity_gen * 100) if capacity_gen > 0 else "NA",
+    })
+
+flow_df_gen = pd.DataFrame(flow_data_gen)
+st.dataframe(flow_df_gen.set_index("Corridor"), use_container_width=True)
+
+# Prices comparison
+st.markdown("### Price Evolution with new Transmission and Generation Capacity")
+base_prices_gen = {}
+new_prices_gen = {}
+
+for country in base_n.buses.index:
+    base_prices_gen[country] = base_n.buses_t.marginal_price[country].iloc[0] if not base_n.buses_t.marginal_price.empty else 0
+    new_prices_gen[country] = n_sensitivity_gen.buses_t.marginal_price[country].iloc[0] if not n_sensitivity_gen.buses_t.marginal_price.empty else 0
+
+price_comparison_gen = pd.DataFrame({
+    "Country": list(base_prices_gen.keys()),
+    "Base Price (€/MWh)": list(base_prices_gen.values()),
+    "New Price (€/MWh)": list(new_prices_gen.values()),
+})
+price_comparison_gen["Price Change (€/MWh)"] = price_comparison_gen["New Price (€/MWh)"] - price_comparison_gen["Base Price (€/MWh)"]
+
+gen_df = n_sensitivity_gen.generators["p_nom"].to_frame("p_nom")
+gen_df = gen_df.merge(n_sensitivity_gen.generators_t.p.T, left_index=True, right_index=True)
+gen_df["Utilization (%)"] = gen_df.apply(lambda row: (row[1] / row["p_nom"] * 100) if row["p_nom"] > 0 else 0, axis=1)
+gen_df["Type"] = gen_df.index.map(lambda x: x.split("-")[-1])
+gen_df.index = gen_df.index.map(lambda x: x.split("-")[0])
+gen_df.columns = ["Capacity (MW)", "Dispatch (MW)", "Utilization (%)", "Type"]
+gen_df = gen_df[["Type", "Capacity (MW)", "Dispatch (MW)", "Utilization (%)"]]
+st.write(gen_df)
+
+# Visualization
+fig_price_comp_gen = go.Figure()
+fig_price_comp_gen.add_trace(
+    go.Bar(x=price_comparison_gen["Country"], y=price_comparison_gen["Base Price (€/MWh)"],
+           name="Base Scenario", marker_color="lightblue")
+)
+fig_price_comp_gen.add_trace(
+    go.Bar(x=price_comparison_gen["Country"], y=price_comparison_gen["New Price (€/MWh)"],
+           name="New Scenario", marker_color="darkblue")
+)
+fig_price_comp_gen.update_layout(
+    title="Price Comparison: Base vs New Transmission & Generation Capacity",
+    barmode="group",
+    xaxis_title="Country",
+    yaxis_title="Price (€/MWh)",
+    height=400,
+)
+st.plotly_chart(fig_price_comp_gen, use_container_width=True)
+
+st.dataframe(price_comparison_gen.set_index("Country"), use_container_width=True)
+
+# System cost comparison
+base_cost_gen = (base_n.generators.marginal_cost * base_n.generators_t.p.sum()).sum()
+new_cost_gen = (n_sensitivity_gen.generators.marginal_cost * n_sensitivity_gen.generators_t.p.sum()).sum()
+cost_saving_gen = base_cost_gen - new_cost_gen
+
+st.info(
+    f"**System Efficiency Impact:**\n\n"
+    f"- Base system cost: €{base_cost_gen:,.0f}\n\n"
+    f"- New system cost: €{new_cost_gen:,.0f}\n\n"
+    f"- **Cost saving: €{cost_saving_gen:,.0f} ({cost_saving_gen/base_cost_gen*100:.1f}% improvement)**\n\n"
+    f"Higher transmission and generation capacity enables:\n"
+    f"1. More efficient dispatch from expanded hydro capacity\n"
+    f"2. Further price convergence across regions\n"
+    f"3. Reduced reliance on expensive thermal generation"
+)
+
+# ============================================================================
+# SECTION 6: KEY INSIGHTS & POLICY IMPLICATIONS
 # ============================================================================
 st.markdown("---")
 st.markdown("## 📊 Key Insights & Policy Implications")
