@@ -7,13 +7,7 @@ from src.bidding_zone import (
     simulate_multizone,
     simulate_multizone_with_transmission,
     simulate_multizone_with_transmission_and_generation,
-    TRANSMISSION_CAPACITY,
-    GENERATION_CAPACITY,
-    DEMAND,
 )
-
-# Page configuration
-st.set_page_config(page_title="Bidding Zone Market Analysis", layout="wide")
 
 # No custom styling needed - using native Streamlit components for theme compatibility
 
@@ -22,8 +16,6 @@ if "single_zone_network" not in st.session_state:
     st.session_state.single_zone_network = None
 if "multizone_network" not in st.session_state:
     st.session_state.multizone_network = None
-if "transmission_sliders_done" not in st.session_state:
-    st.session_state.transmission_sliders_done = False
 
 
 # ============================================================================
@@ -131,12 +123,12 @@ fig = px.bar(
     hover_data=["Capacity (MW)", "Utilization (%)", "Cost (€/MWh)"],
 )
 fig.update_layout(height=400)
-st.plotly_chart(fig, use_container_width=True)
+st.plotly_chart(fig, width="stretch")
 
 # Generation table
 st.dataframe(
     gen_df.set_index(["Country", "Technology"]).sort_index(),
-    use_container_width=True,
+    width="stretch",
     height=300,
 )
 
@@ -160,7 +152,7 @@ fig_prices = px.bar(
 )
 fig_prices.update_traces(textposition="auto")
 fig_prices.update_layout(height=400, showlegend=False)
-st.plotly_chart(fig_prices, use_container_width=True)
+st.plotly_chart(fig_prices, width="stretch")
 
 # Power flows (only for multi-zone)
 if comparison_type == "Multi-Zone (Connected System)" and not n.links.empty:
@@ -195,9 +187,9 @@ if comparison_type == "Multi-Zone (Connected System)" and not n.links.empty:
     )
     fig_flow.update_traces(textposition="auto")
     fig_flow.update_layout(height=400)
-    st.plotly_chart(fig_flow, use_container_width=True)
+    st.plotly_chart(fig_flow, width="stretch")
     
-    st.dataframe(flow_df.set_index("Corridor"), use_container_width=True)
+    st.dataframe(flow_df.set_index("Corridor"), width="stretch")
     
     # Insights
     max_util = flow_df["Utilization (%)"].max()
@@ -301,7 +293,7 @@ for link in ["South Africa-Mozambique link", "South Africa-Eswatini link", "Moza
     })
 
 comparison_df = pd.DataFrame(comparison_data)
-st.dataframe(comparison_df.set_index("Corridor"), use_container_width=True)
+st.dataframe(comparison_df.set_index("Corridor"), width="stretch")
 
 # Prices comparison
 st.markdown("### Price Evolution with Transmission Capacity")
@@ -336,9 +328,9 @@ fig_price_comp.update_layout(
     yaxis_title="Price (€/MWh)",
     height=400,
 )
-st.plotly_chart(fig_price_comp, use_container_width=True)
+st.plotly_chart(fig_price_comp, width="stretch")
 
-st.dataframe(price_comparison.set_index("Country"), use_container_width=True)
+st.dataframe(price_comparison.set_index("Country"), width="stretch")
 
 # System cost comparison
 base_cost = (base_n.generators.marginal_cost * base_n.generators_t.p.sum()).sum()
@@ -453,7 +445,7 @@ for link in ["South Africa-Mozambique link", "South Africa-Eswatini link", "Moza
     })
 
 flow_df_gen = pd.DataFrame(flow_data_gen)
-st.dataframe(flow_df_gen.set_index("Corridor"), use_container_width=True)
+st.dataframe(flow_df_gen.set_index("Corridor"), width="stretch")
 
 # Prices comparison
 st.markdown("### Price Evolution with new Transmission and Generation Capacity")
@@ -472,8 +464,8 @@ price_comparison_gen = pd.DataFrame({
 price_comparison_gen["Price Change (€/MWh)"] = price_comparison_gen["New Price (€/MWh)"] - price_comparison_gen["Base Price (€/MWh)"]
 
 gen_df = n_sensitivity_gen.generators["p_nom"].to_frame("p_nom")
-gen_df = gen_df.merge(n_sensitivity_gen.generators_t.p.T, left_index=True, right_index=True)
-gen_df["Utilization (%)"] = gen_df.apply(lambda row: (row[1] / row["p_nom"] * 100) if row["p_nom"] > 0 else 0, axis=1)
+gen_df = gen_df.merge(n_sensitivity_gen.generators_t.p.T, left_index=True, right_index=True).rename(columns={"now": "Dispatch (MW)"})
+gen_df["Utilization (%)"] = gen_df.apply(lambda row: (row["Dispatch (MW)"] / row["p_nom"] * 100) if row["p_nom"] > 0 else 0, axis=1)
 gen_df["Type"] = gen_df.index.map(lambda x: x.split("-")[-1])
 gen_df.index = gen_df.index.map(lambda x: x.split("-")[0])
 gen_df.columns = ["Capacity (MW)", "Dispatch (MW)", "Utilization (%)", "Type"]
@@ -497,9 +489,9 @@ fig_price_comp_gen.update_layout(
     yaxis_title="Price (€/MWh)",
     height=400,
 )
-st.plotly_chart(fig_price_comp_gen, use_container_width=True)
+st.plotly_chart(fig_price_comp_gen, width="stretch")
 
-st.dataframe(price_comparison_gen.set_index("Country"), use_container_width=True)
+st.dataframe(price_comparison_gen.set_index("Country"), width="stretch")
 
 # System cost comparison
 base_cost_gen = (base_n.generators.marginal_cost * base_n.generators_t.p.sum()).sum()

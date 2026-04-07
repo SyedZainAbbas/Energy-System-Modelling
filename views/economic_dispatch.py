@@ -1,5 +1,4 @@
 import pandas as pd
-import plotly.graph_objects as go
 import plotly.express as px
 import streamlit as st
 from src.economic_dispatch import (
@@ -8,9 +7,6 @@ from src.economic_dispatch import (
     TRANSMISSION_CAPACITY_BASE,
     BUS_DEMAND,
 )
-
-# Page configuration
-st.set_page_config(page_title="Economic Dispatch Analysis", layout="wide")
 
 # Initialize session state for caching
 if "network_unconstrained" not in st.session_state:
@@ -99,7 +95,7 @@ for gen_name in n_unconstrained.generators.index:
 gen_df_unconstrained = pd.DataFrame(gen_dispatch_unconstrained).sort_values("Cost (€/MWh)")
 st.dataframe(
     gen_df_unconstrained.set_index("Generator"),
-    use_container_width=True,
+    width="stretch",
     hide_index=False
 )
 
@@ -121,7 +117,7 @@ for line_name in n_unconstrained.lines.index:
     })
 
 line_df_unconstrained = pd.DataFrame(line_flows_unconstrained)
-st.dataframe(line_df_unconstrained.set_index("Line"), use_container_width=True, hide_index=False)
+st.dataframe(line_df_unconstrained.set_index("Line"), width="stretch", hide_index=False)
 
 # Locational Marginal Prices
 st.markdown("### Locational Marginal Prices (LMPs)")
@@ -137,7 +133,7 @@ for bus in n_unconstrained.buses.index:
     })
 
 lmp_df_unconstrained = pd.DataFrame(lmp_unconstrained)
-st.dataframe(lmp_df_unconstrained.set_index("Bus"), use_container_width=True, hide_index=False)
+st.dataframe(lmp_df_unconstrained.set_index("Bus"), width="stretch", hide_index=False)
 
 st.info(
     "**Observation:** Without transmission constraints, all buses have the same LMP (€7.5/MWh), "
@@ -194,7 +190,6 @@ transmission_limits = {
 # Optimize with constraints
 with st.spinner("Computing constrained dispatch..."):
     n_constrained = optimize_constrained_dispatch(transmission_limits)
-    st.write(n_constrained.model.status)
     if n_constrained.model.status != "ok":
         st.error("Optimization failed! Please increase the line capacities.")
         st.stop()
@@ -259,9 +254,9 @@ fig_gen = px.bar(
     }
 )
 fig_gen.update_layout(height=400)
-st.plotly_chart(fig_gen, use_container_width=True)
+st.plotly_chart(fig_gen, width="stretch")
 
-st.dataframe(gen_df_constrained.set_index("Generator"), use_container_width=True, hide_index=False)
+st.dataframe(gen_df_constrained.set_index("Generator"), width="stretch", hide_index=False)
 
 # Transmission flows
 st.markdown("### Transmission Line Flows (Constrained)")
@@ -280,7 +275,7 @@ for line_name in n_constrained.lines.index:
     })
 
 line_df_constrained = pd.DataFrame(line_flows_constrained)
-st.dataframe(line_df_constrained.set_index("Line"), use_container_width=True, hide_index=False)
+st.dataframe(line_df_constrained.set_index("Line"), width="stretch", hide_index=False)
 
 # Locational Marginal Prices
 st.markdown("### Locational Marginal Prices (Constrained)")
@@ -309,9 +304,9 @@ fig_lmp = px.bar(
 )
 fig_lmp.update_traces(textposition="auto")
 fig_lmp.update_layout(height=400, showlegend=False)
-st.plotly_chart(fig_lmp, use_container_width=True)
+st.plotly_chart(fig_lmp, width="stretch")
 
-st.dataframe(lmp_df_constrained.set_index("Bus"), use_container_width=True, hide_index=False)
+st.dataframe(lmp_df_constrained.set_index("Bus"), width="stretch", hide_index=False)
 
 # ============================================================================
 # SECTION 4: KEY INSIGHTS

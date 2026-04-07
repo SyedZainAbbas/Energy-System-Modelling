@@ -1,5 +1,4 @@
 import pypsa
-import pandas as pd
 
 # Generation data
 GENERATION_COSTS = {"A": 7.5, "B": 6, "C": 14, "D": 10}  # €/MWh
@@ -34,9 +33,9 @@ def build_network():
         )
     
     # Add transmission lines (unconstrained - large capacity)
-    n.add("Line", "LINE_1_2", bus0="1", bus1="2", r=0.0001, x=0.2, s_nom=500)
-    n.add("Line", "LINE_1_3", bus0="1", bus1="3", r=0.0001, x=0.2, s_nom=500)
-    n.add("Line", "LINE_2_3", bus0="2", bus1="3", r=0.0001, x=0.1, s_nom=500)
+    n.add("Line", "LINE_1_2", bus0="1", bus1="2", r=0.0001, x=TRANSMISSION_REACTANCE["LINE_1_2"], s_nom=500)
+    n.add("Line", "LINE_1_3", bus0="1", bus1="3", r=0.0001, x=TRANSMISSION_REACTANCE["LINE_1_3"], s_nom=500)
+    n.add("Line", "LINE_2_3", bus0="2", bus1="3", r=0.0001, x=TRANSMISSION_REACTANCE["LINE_2_3"], s_nom=500)
     
     return n
 

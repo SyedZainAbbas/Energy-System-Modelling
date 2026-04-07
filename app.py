@@ -8,7 +8,7 @@ st.set_page_config(
     )
 
 bidding_zone_page = st.Page("views/bidding_zone.py", title="Electricity Bidding Zones")
-economic_dispatch_page = st.Page("views/economic_dispatch.py", title=   "Economic Dispatch")
+economic_dispatch_page = st.Page("views/economic_dispatch.py", title="Economic Dispatch")
 
 pg = st.navigation(
     [bidding_zone_page, economic_dispatch_page]

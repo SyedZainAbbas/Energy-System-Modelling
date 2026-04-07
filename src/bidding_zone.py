@@ -1,6 +1,4 @@
-import numpy as np
 import pypsa
-
 
 # Marginal generation costs in EUR/MWh
 GENERATION_COSTS = {"Wind": 0, "Hydro": 0, "Coal": 30, "Gas": 60, "Oil": 80}
