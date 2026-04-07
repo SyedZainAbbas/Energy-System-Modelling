@@ -93,4 +93,4 @@ def simulate_multizone_with_transmission_and_generation(transmission_capacity_di
                 n.generators.loc[gen_name, "p_nom"] = capacity
     
     n.optimize()
-    return n    
+    return n

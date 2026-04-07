@@ -194,7 +194,7 @@ if comparison_type == "Multi-Zone (Connected System)" and not n.links.empty:
     # Insights
     max_util = flow_df["Utilization (%)"].max()
     if max_util > 80:
-        st.warning("⚠️ **Congestion Alert:** All the links are fully utilized. This is a potential bottleneck limiting power flows.")
+        st.warning("⚠️ **Congestion Alert:** At least one transmission corridor is highly utilized. This may be a bottleneck limiting power flows.")
 
 # Insights for Part 1
 st.markdown("### 💡 Insights from Comparison")
