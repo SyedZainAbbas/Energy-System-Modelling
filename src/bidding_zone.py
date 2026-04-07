@@ -1,6 +1,4 @@
-import numpy as np
 import pypsa
-
 
 # Marginal generation costs in EUR/MWh
 GENERATION_COSTS = {"Wind": 0, "Hydro": 0, "Coal": 30, "Gas": 60, "Oil": 80}
@@ -95,4 +93,4 @@ def simulate_multizone_with_transmission_and_generation(transmission_capacity_di
                 n.generators.loc[gen_name, "p_nom"] = capacity
     
     n.optimize()
-    return n    
+    return n
