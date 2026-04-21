@@ -62,18 +62,32 @@ with st.spinner("Initializing optimizations..."):
     if "uc_part_load" not in st.session_state:
         st.session_state.uc_part_load = part_load(
             **DEFAULTS["part_load"])
+    if "uc_part_load_params" not in st.session_state:
+        st.session_state.uc_part_load_params = dict(DEFAULTS["part_load"])
+    
     if "uc_min_up_time" not in st.session_state:
         st.session_state.uc_min_up_time = minimum_up_time(
             **DEFAULTS["min_up_time"])
+    if "uc_min_up_time_params" not in st.session_state:
+        st.session_state.uc_min_up_time_params = dict(DEFAULTS["min_up_time"])
+    
     if "uc_min_down_time" not in st.session_state:
         st.session_state.uc_min_down_time = minimum_down_time(
             **DEFAULTS["min_down_time"])
+    if "uc_min_down_time_params" not in st.session_state:
+        st.session_state.uc_min_down_time_params = dict(DEFAULTS["min_down_time"])
+    
     if "uc_startup_shutdown" not in st.session_state:
         st.session_state.uc_startup_shutdown = start_up_shut_down_costs(
             **DEFAULTS["startup_shutdown"])
+    if "uc_startup_shutdown_params" not in st.session_state:
+        st.session_state.uc_startup_shutdown_params = dict(DEFAULTS["startup_shutdown"])
+    
     if "uc_ramp_limits" not in st.session_state:
         st.session_state.uc_ramp_limits = ramp_limits(
             **DEFAULTS["ramp_limits"])
+    if "uc_ramp_limits_params" not in st.session_state:
+        st.session_state.uc_ramp_limits_params = dict(DEFAULTS["ramp_limits"])
 
 # ============================================================================
 # SECTION 1: PART-LOAD OPERATION
@@ -111,7 +125,8 @@ with col2:
     )
 
 # Recompute if sliders changed from the last values used to build the result
-current_part_load_params = {"p_min_coal": p_min_coal_pl, "p_min_gas": p_min_gas_pl}
+current_part_load_params = {
+    "p_min_coal": p_min_coal_pl, "p_min_gas": p_min_gas_pl}
 last_part_load_params = st.session_state.get("uc_part_load_params")
 if ("uc_part_load" not in st.session_state or last_part_load_params != current_part_load_params):
     with st.spinner("Optimizing dispatch..."):
@@ -150,7 +165,7 @@ with col2:
     st.plotly_chart(fig_pl, width="stretch")
 
     st.info(
-        "**💡Insight:**\n"
+        "**💡Insight (default scenario example):**\n"
         "- Coal(€20/MWh) has lower marginal cost but higher minimum output (30 %= 3,000 MW).\n"
         f"- At t=3, load drops below coal's minimum, forcing coal off and gas on despite higher cost (€70/MWh)."
     )
@@ -365,8 +380,10 @@ with col2:
     )
 
 # Recompute if sliders changed from the last values used to build the result
-current_startup_shutdown_params = {"min_dt": min_dt_susc_val, "start_up_cost_coal": start_cost_val, "shut_down_cost_gas": shut_cost_val}
-last_startup_shutdown_params = st.session_state.get("uc_startup_shutdown_params")
+current_startup_shutdown_params = {"min_dt": min_dt_susc_val,
+                                   "start_up_cost_coal": start_cost_val, "shut_down_cost_gas": shut_cost_val}
+last_startup_shutdown_params = st.session_state.get(
+    "uc_startup_shutdown_params")
 if ("uc_startup_shutdown" not in st.session_state or last_startup_shutdown_params != current_startup_shutdown_params):
     with st.spinner("Optimizing dispatch..."):
         st.session_state.uc_startup_shutdown = start_up_shut_down_costs(
@@ -414,7 +431,7 @@ with col2:
         "- The optimizer balances these costs against the savings from avoiding unnecessary running."
     )
     st.warning(
-        "⚠️ **Note:** The gas generator shuts down at t=0, starts at t=1, and shuts down again at t=2. "
+        "⚠️ **Note (default scenario example):** The gas generator shuts down at t=0, starts at t=1, and shuts down again at t=2. "
         "The shutdown cost is therefore incurred twice in this scenario."
     )
 
@@ -453,7 +470,8 @@ with col2:
     )
 
 # Recompute if sliders changed from the last values used to build the result
-current_ramp_limits_params = {"ramp_limit_up_coal": ramp_up_val, "ramp_limit_down_coal": ramp_down_val}
+current_ramp_limits_params = {
+    "ramp_limit_up_coal": ramp_up_val, "ramp_limit_down_coal": ramp_down_val}
 last_ramp_limits_params = st.session_state.get("uc_ramp_limits_params")
 if ("uc_ramp_limits" not in st.session_state or last_ramp_limits_params != current_ramp_limits_params):
     with st.spinner("Optimizing dispatch..."):
