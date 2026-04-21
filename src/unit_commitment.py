@@ -71,7 +71,7 @@ def minimum_down_time(min_dt=2, dtb=1):
         marginal_cost=20,
         min_down_time=min_dt,
         down_time_before=dtb,
-        up_time_before=1 if dtb == 0 else dtb,  # Ensure valid initial state
+        up_time_before=0 if dtb > 0 else 1,  # Ensure mutually exclusive initial state
         p_nom=10_000,
     )
     nu.add(

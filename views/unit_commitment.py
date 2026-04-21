@@ -110,12 +110,14 @@ with col2:
         key="p_min_gas_pl",
     )
 
-# Recompute if sliders changed
-if (p_min_coal_pl != DEFAULTS["part_load"]["p_min_coal"] or
-        p_min_gas_pl != DEFAULTS["part_load"]["p_min_gas"]):
+# Recompute if sliders changed from the last values used to build the result
+current_part_load_params = {"p_min_coal": p_min_coal_pl, "p_min_gas": p_min_gas_pl}
+last_part_load_params = st.session_state.get("uc_part_load_params")
+if ("uc_part_load" not in st.session_state or last_part_load_params != current_part_load_params):
     with st.spinner("Optimizing dispatch..."):
         st.session_state.uc_part_load = part_load(
             p_min_coal=p_min_coal_pl, p_min_gas=p_min_gas_pl)
+        st.session_state.uc_part_load_params = current_part_load_params
 
 nu_pl = st.session_state.uc_part_load
 
@@ -126,7 +128,7 @@ if nu_pl.model.status != "ok":
 col1, col2 = st.columns([1, 1.2])
 
 with col1:
-    st.metric("System Cost", f"€{nu_pl.objective:,.0f}/h")
+    st.metric("System Cost", f"€{nu_pl.objective:,.0f}")
     st.dataframe(nu_pl.generators[[
                  "p_nom", "p_min_pu", "marginal_cost"]], width="stretch")
     st.write("**Generator Status**")
@@ -149,7 +151,7 @@ with col2:
 
     st.info(
         "**💡Insight:**\n"
-        "- Coal(€20/MWh) has lower marginal cost but higher minimum output (30 %= 3, 000 MW).\n"
+        "- Coal(€20/MWh) has lower marginal cost but higher minimum output (30 %= 3,000 MW).\n"
         f"- At t=3, load drops below coal's minimum, forcing coal off and gas on despite higher cost (€70/MWh)."
     )
     st.warning("""
@@ -193,11 +195,14 @@ with col2:
         key="utb_slider",
     )
 
-# Recompute if sliders changed
-if min_ut_val != DEFAULTS["min_up_time"]["min_ut"] or utb_val != DEFAULTS["min_up_time"]["utb"]:
+# Recompute if sliders changed from the last values used to build the result
+current_min_up_time_params = {"min_ut": min_ut_val, "utb": utb_val}
+last_min_up_time_params = st.session_state.get("uc_min_up_time_params")
+if ("uc_min_up_time" not in st.session_state or last_min_up_time_params != current_min_up_time_params):
     with st.spinner("Optimizing dispatch..."):
         st.session_state.uc_min_up_time = minimum_up_time(
             min_ut=min_ut_val, utb=utb_val)
+        st.session_state.uc_min_up_time_params = current_min_up_time_params
 
 nu_ut = st.session_state.uc_min_up_time
 
@@ -208,7 +213,7 @@ if nu_ut.model.status != "ok":
 col1, col2 = st.columns([1, 1.2])
 
 with col1:
-    st.metric("System Cost", f"€{nu_ut.objective:,.0f}/h")
+    st.metric("System Cost", f"€{nu_ut.objective:,.0f}")
     st.dataframe(
         nu_ut.generators[["p_nom", "p_min_pu",
                           "marginal_cost", "stand_by_cost", "min_up_time"]],
@@ -269,11 +274,14 @@ with col2:
         key="dtb_slider",
     )
 
-# Recompute if slider changed
-if min_dt_val != DEFAULTS["min_down_time"]["min_dt"] or dtb_val != DEFAULTS["min_down_time"]["dtb"]:
+# Recompute if sliders changed from the last values used to build the result
+current_min_down_time_params = {"min_dt": min_dt_val, "dtb": dtb_val}
+last_min_down_time_params = st.session_state.get("uc_min_down_time_params")
+if ("uc_min_down_time" not in st.session_state or last_min_down_time_params != current_min_down_time_params):
     with st.spinner("Optimizing dispatch..."):
         st.session_state.uc_min_down_time = minimum_down_time(
             min_dt=min_dt_val, dtb=dtb_val)
+        st.session_state.uc_min_down_time_params = current_min_down_time_params
 
 nu_dt = st.session_state.uc_min_down_time
 
@@ -284,7 +292,7 @@ if nu_dt.model.status != "ok":
 col1, col2 = st.columns([1, 1.2])
 
 with col1:
-    st.metric("System Cost", f"€{nu_dt.objective:,.0f}/h")
+    st.metric("System Cost", f"€{nu_dt.objective:,.0f}")
     st.dataframe(
         nu_dt.generators[["p_nom", "p_min_pu",
                           "marginal_cost", "min_down_time"]],
@@ -356,16 +364,17 @@ with col2:
         key="shut_cost_slider",
     )
 
-# Recompute if sliders changed
-if (start_cost_val != DEFAULTS["startup_shutdown"]["start_up_cost_coal"] or
-    shut_cost_val != DEFAULTS["startup_shutdown"]["shut_down_cost_gas"] or
-        min_dt_susc_val != DEFAULTS["startup_shutdown"]["min_dt"]):
+# Recompute if sliders changed from the last values used to build the result
+current_startup_shutdown_params = {"min_dt": min_dt_susc_val, "start_up_cost_coal": start_cost_val, "shut_down_cost_gas": shut_cost_val}
+last_startup_shutdown_params = st.session_state.get("uc_startup_shutdown_params")
+if ("uc_startup_shutdown" not in st.session_state or last_startup_shutdown_params != current_startup_shutdown_params):
     with st.spinner("Optimizing dispatch..."):
         st.session_state.uc_startup_shutdown = start_up_shut_down_costs(
             min_dt=min_dt_susc_val,
             start_up_cost_coal=start_cost_val,
             shut_down_cost_gas=shut_cost_val
         )
+        st.session_state.uc_startup_shutdown_params = current_startup_shutdown_params
 
 nu_susc = st.session_state.uc_startup_shutdown
 
@@ -376,7 +385,7 @@ if nu_susc.model.status != "ok":
 col1, col2 = st.columns([1, 1.2])
 
 with col1:
-    st.metric("System Cost", f"€{nu_susc.objective:,.0f}/h")
+    st.metric("System Cost", f"€{nu_susc.objective:,.0f}")
     st.dataframe(
         nu_susc.generators[["p_nom", "p_min_pu", "marginal_cost",
                             "start_up_cost", "shut_down_cost", "min_down_time"]],
@@ -443,14 +452,16 @@ with col2:
         key="ramp_down_slider",
     )
 
-# Recompute if sliders changed
-if (ramp_up_val != DEFAULTS["ramp_limits"]["ramp_limit_up_coal"] or
-        ramp_down_val != DEFAULTS["ramp_limits"]["ramp_limit_down_coal"]):
+# Recompute if sliders changed from the last values used to build the result
+current_ramp_limits_params = {"ramp_limit_up_coal": ramp_up_val, "ramp_limit_down_coal": ramp_down_val}
+last_ramp_limits_params = st.session_state.get("uc_ramp_limits_params")
+if ("uc_ramp_limits" not in st.session_state or last_ramp_limits_params != current_ramp_limits_params):
     with st.spinner("Optimizing dispatch..."):
         st.session_state.uc_ramp_limits = ramp_limits(
             ramp_limit_up_coal=ramp_up_val,
             ramp_limit_down_coal=ramp_down_val
         )
+        st.session_state.uc_ramp_limits_params = current_ramp_limits_params
 
 nu_ramp = st.session_state.uc_ramp_limits
 
@@ -461,7 +472,7 @@ if nu_ramp.model.status != "ok":
 col1, col2 = st.columns([1, 1.2])
 
 with col1:
-    st.metric("System Cost", f"€{nu_ramp.objective:,.0f}/h")
+    st.metric("System Cost", f"€{nu_ramp.objective:,.0f}")
     st.dataframe(
         nu_ramp.generators[["p_nom", "p_min_pu",
                             "marginal_cost", "ramp_limit_up", "ramp_limit_down"]],
