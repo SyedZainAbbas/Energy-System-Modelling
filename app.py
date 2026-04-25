@@ -13,9 +13,12 @@ economic_dispatch_page = st.Page(
     "views/economic_dispatch.py", title="Economic Dispatch")
 unit_commitment_page = st.Page(
     "views/unit_commitment.py", title="Unit Commitment")
+negative_prices_page = st.Page(
+    "views/negative_prices.py", title="Negative Electricity Prices")
 
 pg = st.navigation(
-    [bidding_zone_page, economic_dispatch_page, unit_commitment_page]
+    [bidding_zone_page, economic_dispatch_page,
+        unit_commitment_page, negative_prices_page]
 )
 
 pg.run()
